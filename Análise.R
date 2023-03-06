@@ -188,9 +188,6 @@ summary(mod_lmm)
 Anova(mod_lmm)
 confint.default(mod_lmm)
 
-
-glimpse(df_lmm3)
-
 ##############################DATA VISUALIZATION################################
 ####graphs####
 
