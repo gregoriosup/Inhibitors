@@ -1,14 +1,11 @@
 #################################PRE-ANALYSIS###################################
 ####packages####
 
-library(dplyr)
-
-library(tidyr)
-
 if(!require(pacman)) install.packages("pacman")
 library(pacman)
 
-pacman::p_load(dplyr, psych, car, MASS, DescTools, QuantPsyc, ggplot2, gridExtra,nlme, reshape)
+pacman::p_load(dplyr, psych, car, MASS, DescTools, QuantPsyc, ggplot2, gridExtra,nlme, reshape, dplyr,
+               tidyr)
 
 ####data####
 
@@ -170,19 +167,34 @@ fisher.test(table(data$inhib_gen, data$tox_tac))
 
 ####linear mixed model####
 
-df_lmm <- data[,c("record_id","var_tac", "mean_cd_baseline", "gen_vel", "mean_dose1", "mean_dose2" ,
-                  "var_dose", "age", "mean_hem1", "mean_hem2","var_hem", "inhibitor_use", "mean_cd_dur", "sex")]
+df_lmm1 <- data[,c("record_id", "serumlvl_before_1", "serumlvl_before_2", "serumlvl_before_3", "serumlvl_dur_1",
+                  "serumlvl_dur_2", "serumlvl_dur_3", "serumlvl_after_1", "serumlvl_after_2", "serumlvl_after_3",
+                  "hem_before_1", "hem_before_2", "hem_before_3", "hem_dur_1", "hem_dur_2", "hem_dur_3", "hem_after_1",
+                  "hem_after_2", "hem_after_3", "dose_before_1", "dose_before_2", "dose_before_3", "dose_dur_1",
+                  "dose_dur_2", "dose_dur_3", "dose_after_1", "dose_after_2", "dose_after_3","age", "sex", "gen_vel")]
 
-df_lmm2 <- data[, c("record_id", "mean_cd_baseline", "mean_dose1", "mean_hem1","mean_cd_dur",
-                    "mean_dose2", "mean_hem2",  "gen_vel")]
+df_lmm <- reshape(df_lmm1, 
+                  varying = c("dose_before_1","hem_before_1","serumlvl_before_1",
+                              "dose_before_2","hem_before_2","serumlvl_before_2",
+                              "dose_before_3","hem_before_3","serumlvl_before_3",
+                              "dose_dur_1","hem_dur_1","serumlvl_dur_1",
+                              "dose_dur_2","hem_dur_2","serumlvl_dur_2",
+                              "dose_dur_3","hem_dur_3","serumlvl_dur_3",      
+                              "dose_after_1","hem_after_1","serumlvl_after_1",
+                              "dose_after_2","hem_after_2","serumlvl_after_2",
+                              "dose_after_3","hem_after_3","serumlvl_after_3"), 
+                  idvar = "record_id", v.names = c("serumlvl", "hem", "dose"),direction = "long" )
 
-df_lmm3 <- reshape(df_lmm2, varying = c("mean_cd_baseline", "mean_dose1", "mean_hem1","mean_cd_dur",
-        "mean_dose2", "mean_hem2"), idvar = "record_id", v.names = c("cd", "dose", "hem"),direction = "long" )
+df_lmm$inhib <- ifelse(df_lmm$time == 4 | df_lmm$time == 5 | df_lmm$time == 6, "inhib", "non_inhib" )
 
-df_lmm3$time <- as.factor(df_lmm3$time)
+#acrescentar mais uma variavel pra identificar grupo controle
 
-mod_lmm <- lme(cd ~ time + hem + gen_vel*time, 
-               data = df_lmm3, random = ~ time|gen_vel, method = "ML")
+df_lmm$inhib <- as.factor(df_lmm$inhib)
+
+glimpse(df_lmm)
+
+mod_lmm <- lme(serumlvl ~ inhib + hem + gen_vel, 
+               data = df_lmm, random = ~ inhib|gen_vel, method = "ML")
 
 summary(mod_lmm)
 Anova(mod_lmm)
