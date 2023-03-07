@@ -171,7 +171,8 @@ df_lmm1 <- data[,c("record_id", "serumlvl_before_1", "serumlvl_before_2", "serum
                   "serumlvl_dur_2", "serumlvl_dur_3", "serumlvl_after_1", "serumlvl_after_2", "serumlvl_after_3",
                   "hem_before_1", "hem_before_2", "hem_before_3", "hem_dur_1", "hem_dur_2", "hem_dur_3", "hem_after_1",
                   "hem_after_2", "hem_after_3", "dose_before_1", "dose_before_2", "dose_before_3", "dose_dur_1",
-                  "dose_dur_2", "dose_dur_3", "dose_after_1", "dose_after_2", "dose_after_3","age", "sex", "gen_vel")]
+                  "dose_dur_2", "dose_dur_3", "dose_after_1", "dose_after_2", "dose_after_3","age", "sex", "gen_vel",
+                  "inhibitor_use")]
 
 df_lmm <- reshape(df_lmm1, 
                   varying = c("dose_before_1","hem_before_1","serumlvl_before_1",
@@ -185,29 +186,19 @@ df_lmm <- reshape(df_lmm1,
                               "dose_after_3","hem_after_3","serumlvl_after_3"), 
                   idvar = "record_id", v.names = c("serumlvl", "hem", "dose"),direction = "long" )
 
-df_lmm$inhib <- ifelse(df_lmm$time == 4 | df_lmm$time == 5 | df_lmm$time == 6, "inhib", "non_inhib" )
+df_lmm$inhib <- as.factor(ifelse(df_lmm$time == 4 | df_lmm$time == 5 | df_lmm$time == 6, "using_inhib", "non_using" ))
 
-#acrescentar mais uma variavel pra identificar grupo controle
+df_lmm <- na.omit(df_lmm)
 
-df_lmm$inhib <- as.factor(df_lmm$inhib)
+df_lmm$cd <- df_lmm$serumlvl / df_lmm$dose #tac concentration/dose
 
-glimpse(df_lmm)
-
-mod_lmm <- lme(serumlvl ~ inhib + hem + gen_vel, 
+mod_lmm <- lme(cd ~ inhib + hem + gen_vel, 
                data = df_lmm, random = ~ inhib|gen_vel, method = "ML")
 
 summary(mod_lmm)
 Anova(mod_lmm)
-confint.default(mod_lmm)
+
 
 ##############################DATA VISUALIZATION################################
 ####graphs####
-
-
-
-
-
-
 ####tables####
-
-
