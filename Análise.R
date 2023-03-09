@@ -5,7 +5,7 @@ if(!require(pacman)) install.packages("pacman")
 library(pacman)
 
 pacman::p_load(dplyr, psych, car, MASS, DescTools, QuantPsyc, ggplot2, gridExtra,nlme, reshape, dplyr,
-               tidyr)
+               tidyr, lme4, influence.ME)
 
 ####data####
 
@@ -167,6 +167,8 @@ fisher.test(table(data$inhib_gen, data$tox_tac))
 
 ####linear mixed model####
 
+#dataframe for lmm analysis
+
 df_lmm1 <- data[,c("record_id", "serumlvl_before_1", "serumlvl_before_2", "serumlvl_before_3", "serumlvl_dur_1",
                   "serumlvl_dur_2", "serumlvl_dur_3", "serumlvl_after_1", "serumlvl_after_2", "serumlvl_after_3",
                   "hem_before_1", "hem_before_2", "hem_before_3", "hem_dur_1", "hem_dur_2", "hem_dur_3", "hem_after_1",
@@ -187,17 +189,42 @@ df_lmm <- reshape(df_lmm1,
                   idvar = "record_id", v.names = c("serumlvl", "hem", "dose"),direction = "long" )
 
 df_lmm$inhib <- as.factor(ifelse(df_lmm$time == 4 | df_lmm$time == 5 | df_lmm$time == 6, "using_inhib", "non_using" ))
-
 df_lmm <- na.omit(df_lmm)
-
 df_lmm$cd <- df_lmm$serumlvl / df_lmm$dose #tac concentration/dose
+df_lmm$cdlog <- log(df_lmm$cd)
 
-mod_lmm <- lme(cd ~ inhib + hem + gen_vel, 
-               data = df_lmm, random = ~ inhib|gen_vel, method = "ML")
+#building models 
 
-summary(mod_lmm)
-Anova(mod_lmm)
+mod_lmm3 <- lmer(cdlog ~ inhib + gen_vel + hem + (1+gen_vel|record_id) + (1+inhib|record_id), 
+               data = df_lmm, REML = F)
 
+mod_lmm2 <- lmer(cd ~ inhib + gen_vel + (1+gen_vel|record_id) + (1+inhib|record_id), 
+                data = df_lmm, REML = F)
+
+mod_lmm1 <- lmer(cd ~ inhib + (1+gen_vel|record_id) + (1+inhib|record_id), 
+                data = df_lmm, REML = F)
+
+mod_lmm0 <- lmer(cd ~ 1 + (1|gen_vel) + (1+gen_vel|record_id) + (1+inhib|record_id), 
+                 data = df_lmm, REML = F)
+
+summary(mod_lmm3)#$coefficients[,"Estimate"]
+coef(mod_lmm3)
+anova(mod_lmm1, mod_lmm0)
+anova(mod_lmm2, mod_lmm1)
+anova(mod_lmm3, mod_lmm2)
+
+Anova(mod_lmm3)
+
+exp(summary(mod_lmm3)$coefficients[,"Estimate"])
+
+
+#presumptions tests
+
+plot(fitted(mod_lmm3),residuals(mod_lmm3)) #Linearity and Homoskedasticity and outliers of residuals
+plot(mod_lmm3, which = 5) #Linearity and Homoskedasticity and outliers of residuals
+qqnorm(residuals(mod_lmm3))#normality of residuals
+hist(residuals(mod_lmm3))#normality of residuals
+vif(mod_lmm3) #multicollinearity > 10
 
 ##############################DATA VISUALIZATION################################
 ####graphs####
