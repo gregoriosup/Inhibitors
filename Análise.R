@@ -11,11 +11,14 @@ pacman::p_load(dplyr, psych, car, MASS, DescTools, QuantPsyc, ggplot2, gridExtra
 
 # reading data
 
-data <- read.csv2(file = "data1.csv", dec = ".") #reading data in csv with sep = ;
+data <- read.csv2(file = "data_inhib.csv", dec = ".") #reading data in csv with sep = ;
+
 
 # excluding subjects with relevant missing values
 
 data <- data[-c(1,3,10,18,42,46,60,63,65,79,85,95,97),]
+
+names(data)[names(data) == "record_id"] <- "id"
 
 # data transformation
 
@@ -30,6 +33,8 @@ cols_date <- c(5,23,24,25,35:47,51,55,59,63,67,71,75,79)
 data[cols_date] <- lapply(data[cols_date], as.Date) #alteration to date
 
 data[[82]] <- (as.double(data[[82]])) #alteration to double
+data[[61]] <- (as.double(data[[61]])) #alteration to double
+
 
 glimpse(data) #visualization variables' types
 
@@ -169,7 +174,7 @@ fisher.test(table(data$inhib_gen, data$tox_tac))
 
 #dataframe for lmm analysis
 
-df_lmm1 <- data[,c("record_id", "serumlvl_before_1", "serumlvl_before_2", "serumlvl_before_3", "serumlvl_dur_1",
+df_lmm1 <- data[,c("id", "serumlvl_before_1", "serumlvl_before_2", "serumlvl_before_3", "serumlvl_dur_1",
                   "serumlvl_dur_2", "serumlvl_dur_3", "serumlvl_after_1", "serumlvl_after_2", "serumlvl_after_3",
                   "hem_before_1", "hem_before_2", "hem_before_3", "hem_dur_1", "hem_dur_2", "hem_dur_3", "hem_after_1",
                   "hem_after_2", "hem_after_3", "dose_before_1", "dose_before_2", "dose_before_3", "dose_dur_1",
@@ -186,25 +191,30 @@ df_lmm <- reshape(df_lmm1,
                               "dose_after_1","hem_after_1","serumlvl_after_1",
                               "dose_after_2","hem_after_2","serumlvl_after_2",
                               "dose_after_3","hem_after_3","serumlvl_after_3"), 
-                  idvar = "record_id", v.names = c("serumlvl", "hem", "dose"),direction = "long" )
+                  idvar = "id", v.names = c("serumlvl", "hem", "dose"),direction = "long" )
 
 df_lmm$inhib <- as.factor(ifelse(df_lmm$time == 4 | df_lmm$time == 5 | df_lmm$time == 6, "using_inhib", "non_using" ))
+
+sum(is.na(df_lmm))
 df_lmm <- na.omit(df_lmm)
+summary(df_lmm)
+
+
 df_lmm$cd <- df_lmm$serumlvl / df_lmm$dose #tac concentration/dose
 df_lmm$cdlog <- log(df_lmm$cd)
 
 #building models 
 
-mod_lmm3 <- lmer(cdlog ~ inhib + gen_vel + hem + (1+gen_vel|record_id) + (1+inhib|record_id), 
+mod_lmm3 <- lmer(cdlog ~ inhib + gen_vel + hem + (1+gen_vel|id) + (1+inhib|id), 
                data = df_lmm, REML = F)
 
-mod_lmm2 <- lmer(cd ~ inhib + gen_vel + (1+gen_vel|record_id) + (1+inhib|record_id), 
+mod_lmm2 <- lmer(cd ~ inhib + gen_vel + (1+gen_vel|id) + (1+inhib|id), 
                 data = df_lmm, REML = F)
 
-mod_lmm1 <- lmer(cd ~ inhib + (1+gen_vel|record_id) + (1+inhib|record_id), 
+mod_lmm1 <- lmer(cd ~ inhib + (1+gen_vel|id) + (1+inhib|id), 
                 data = df_lmm, REML = F)
 
-mod_lmm0 <- lmer(cd ~ 1 + (1|gen_vel) + (1+gen_vel|record_id) + (1+inhib|record_id), 
+mod_lmm0 <- lmer(cd ~ 1 + (1|gen_vel) + (1+gen_vel|id) + (1+inhib|id), 
                  data = df_lmm, REML = F)
 
 summary(mod_lmm3)#$coefficients[,"Estimate"]
