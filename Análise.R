@@ -160,16 +160,6 @@ data$inhib_gen <- ifelse(data$inhibitor_use == "inhib" & data$gen_vel == "slow",
 
 fisher.test(table(data$inhib_gen, data$tox_tac))
 
-####slow vs fast####
-## test t
-
-##all subjects
-
-##inhibitor group
-
-##non-inhibitor group
-
-
 ####linear mixed model####
 
 #dataframe for lmm analysis
@@ -194,47 +184,54 @@ df_lmm <- reshape(df_lmm1,
                   idvar = "id", v.names = c("serumlvl", "hem", "dose"),direction = "long" )
 
 df_lmm$inhib <- as.factor(ifelse(df_lmm$time == 4 | df_lmm$time == 5 | df_lmm$time == 6, "using_inhib", "non_using" ))
+df_lmm$cd <- df_lmm$serumlvl / df_lmm$dose #tac concentration/dose
+df_lmm$cdlog <- log(df_lmm$cd)
 
 sum(is.na(df_lmm))
 df_lmm <- na.omit(df_lmm)
 summary(df_lmm)
 
+#building models
 
-df_lmm$cd <- df_lmm$serumlvl / df_lmm$dose #tac concentration/dose
-df_lmm$cdlog <- log(df_lmm$cd)
 
-#building models 
-
-mod_lmm3 <- lmer(cdlog ~ inhib + gen_vel + hem + (1+gen_vel|id) + (1+inhib|id), 
-               data = df_lmm, REML = F)
-
-mod_lmm2 <- lmer(cd ~ inhib + gen_vel + (1+gen_vel|id) + (1+inhib|id), 
-                data = df_lmm, REML = F)
-
-mod_lmm1 <- lmer(cd ~ inhib + (1+gen_vel|id) + (1+inhib|id), 
-                data = df_lmm, REML = F)
-
-mod_lmm0 <- lmer(cd ~ 1 + (1|gen_vel) + (1+gen_vel|id) + (1+inhib|id), 
+mod_lmm5 <- lmer(cdlog ~ inhib + gen_vel + hem + age + sex + (1+time|id), 
                  data = df_lmm, REML = F)
 
-summary(mod_lmm3)#$coefficients[,"Estimate"]
+mod_lmm4 <- lmer(cdlog ~ inhib + gen_vel + hem + age + (1+time|id), 
+                 data = df_lmm, REML = F)
+
+mod_lmm3 <- lmer(cdlog ~ inhib + gen_vel + hem + (1+time|id), 
+               data = df_lmm, REML = F)
+
+mod_lmm2 <- lmer(cd ~ inhib + gen_vel + (1+time|id), 
+                data = df_lmm, REML = F)
+
+mod_lmm1 <- lmer(cd ~ inhib + (1+time|id), 
+                data = df_lmm, REML = F)
+
+mod_lmm0 <- lmer(cd ~ 1 + (1+time|id), 
+                 data = df_lmm, REML = F)
+
+summary(mod_lmm5)#$coefficients[,"Estimate"]
 coef(mod_lmm3)
 anova(mod_lmm1, mod_lmm0)
 anova(mod_lmm2, mod_lmm1)
 anova(mod_lmm3, mod_lmm2)
+anova(mod_lmm4, mod_lmm3)
+anova(mod_lmm5, mod_lmm4)
 
-Anova(mod_lmm3)
+Anova(mod_lmm4)
 
-exp(summary(mod_lmm3)$coefficients[,"Estimate"])
+coef_100 <- (exp(fixef(mod_lmm5)) -1) * 100
 
 
 #presumptions tests
 
-plot(fitted(mod_lmm3),residuals(mod_lmm3)) #Linearity and Homoskedasticity and outliers of residuals
-plot(mod_lmm3, which = 5) #Linearity and Homoskedasticity and outliers of residuals
-qqnorm(residuals(mod_lmm3))#normality of residuals
-hist(residuals(mod_lmm3))#normality of residuals
-vif(mod_lmm3) #multicollinearity > 10
+plot(fitted(mod_lmm5),residuals(mod_lmm5)) #Linearity and Homoskedasticity and outliers of residuals
+plot(mod_lmm5, which = 5) #Linearity and Homoskedasticity and outliers of residuals
+qqnorm(residuals(mod_lmm4))#normality of residuals
+hist(residuals(mod_lmm4))#normality of residuals
+vif(mod_lmm4) #multicollinearity > 10
 
 ##############################DATA VISUALIZATION################################
 ####graphs####
