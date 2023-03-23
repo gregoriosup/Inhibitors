@@ -224,6 +224,7 @@ Anova(mod_lmm4)
 
 coef_100 <- (exp(fixef(mod_lmm5)) -1) * 100
 
+confint(mod_lmm5)
 
 #presumptions tests
 
