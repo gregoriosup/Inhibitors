@@ -5,7 +5,7 @@ if(!require(pacman)) install.packages("pacman")
 library(pacman)
 
 pacman::p_load(dplyr, psych, car, MASS, DescTools, QuantPsyc, ggplot2, gridExtra,nlme, reshape, dplyr,
-               tidyr, lme4, influence.ME)
+               tidyr, lme4, influence.ME, gtsummary)
 
 ####data####
 
@@ -237,3 +237,24 @@ vif(mod_lmm4) #multicollinearity > 10
 ##############################DATA VISUALIZATION################################
 ####graphs####
 ####tables####
+
+data1 <- data[,c("sex", "age", "weigth", "ethnicity", "inhibitor___0", "inhibitor___1", "inhibitor___2",
+                 "inhibitor___3", "inhibitor___4", "inhibitor___5", "quant_in", "mean_serumtac1",
+                 "mean_serumtac2", "mean_serumtac3", "mean_dose1", "mean_dose2", "mean_cd_baseline",
+                 "mean_cd_dur", "mean_hem1", "mean_hem2","gen_receptor", "inhibitor_use")] 
+
+data1$sex <- factor(data1$sex, label = c("F", "M"), level = c("0","1"))
+data1$ethnicity <- factor(data1$ethnicity, labels = c("Amarela", "Branca", "Indígena", "Negra", "Parda"), 
+                          levels = c(0:4))
+data1$gen_receptor <- factor(data1$gen_receptor, labels = c("TT", "CT", "CC"), levels = c(0:2))
+
+tbl_summary(data1,
+            by = inhibitor_use, statistic = list(all_continuous() ~ "{mean} ± {sd}"), 
+            value = c (inhibitor___0~1, inhibitor___1~1,inhibitor___2~1,inhibitor___3~1,inhibitor___4~1,
+                       inhibitor___5~1, quant_in~1)) %>% 
+  add_overall() %>% 
+  add_p() %>% 
+  add_n()
+              
+                  
+

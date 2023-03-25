@@ -1,12 +1,17 @@
-1) Continuar atualizando o df_lmm:
-    -talvez separar baseline de during.
-    -pensar em separar todos os tempos ou se posso deixar juntos.
+1) Adicionar outros genotipos no df e tbm no modelo
+2) Atualizar tabela com os genótipos e as doenças de base
+3) Atualizar as idades
+4) Conferir reressão logísica
 
-2) Verificar os pressupostos do lmm:
-    -fazer modelo mais simples.
-    -verificar os pressupostos.
-    -transformar variaveis se necessário.
+LER ARTIGOS E VERIFICAR SE ADICIONA MAIS ALGUMA INFORMAÇÃO ANTES DE PASSAR PRA EXCEL
 
-3) Comparar os modelos e escolher o modelo final.
+5) Transferir os resultados para planilha de excel
+6) Escrever resultados e interpretações preliminares
+7) Fazer gráficos e figuras
 
-4) ler livro e seguir suas instruções.
+APRESENTAR PARA O GRUPO
+
+8) Escrever topico resultados e discussão
+9) Escrever método
+10) Escrever introdução
+11) Escrever resumo siicusp
